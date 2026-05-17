@@ -50,7 +50,10 @@ func (c TmuxClient) Capture(tmuxName string, lines int) (string, error) {
 }
 
 func (c TmuxClient) Send(tmuxName, text string) error {
-	return run(c.bin(), "send-keys", "-t", tmuxName, text, "Enter")
+	if err := run(c.bin(), sendLiteralArgs(tmuxName, text)...); err != nil {
+		return err
+	}
+	return run(c.bin(), sendSubmitArgs(tmuxName)...)
 }
 
 func (c TmuxClient) Kill(tmuxName string) error {
@@ -72,4 +75,12 @@ func commandError(name string, err error, output []byte) error {
 		return fmt.Errorf("%s: %w", name, err)
 	}
 	return fmt.Errorf("%s: %s", name, msg)
+}
+
+func sendLiteralArgs(tmuxName, text string) []string {
+	return []string{"send-keys", "-t", tmuxName, "-l", text}
+}
+
+func sendSubmitArgs(tmuxName string) []string {
+	return []string{"send-keys", "-t", tmuxName, "C-m"}
 }
